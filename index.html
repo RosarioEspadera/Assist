@@ -13,6 +13,7 @@
   </header>
 
   <main>
+    <!-- Chat Section -->
     <section class="chat-card">
       <div id="chat-box" class="chat-box">
         <div class="message assistant">
@@ -32,15 +33,18 @@
       </div>
     </section>
 
-    <aside class="info">
-      <h3>📌 About</h3>
-      <p>AIWord remembers your past messages so you can chat naturally.</p>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="profile">
+        <img id="avatar" src="https://via.placeholder.com/80" alt="avatar">
+        <h3 id="username">Guest</h3>
+        <button id="login-btn" onclick="toggleLogin()">Log in</button>
+      </div>
 
-      <h3>🛠️ How To</h3>
-      <p>Type → Select action → Send → AIWord responds below.</p>
-
-      <h3>👤 Developer</h3>
-      <p>Made by <strong>Rosario Espadera</strong>.</p>
+      <div class="topics">
+        <h3>📂 Past Topics</h3>
+        <ul id="topic-list"></ul>
+      </div>
     </aside>
   </main>
 
