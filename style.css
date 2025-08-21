@@ -89,16 +89,46 @@ button:hover {
   background: #ff4f88;
 }
 
-.info {
+/* Sidebar */
+.sidebar {
   flex: 1;
   background: rgba(255,255,255,0.1);
   padding: 1rem;
   border-radius: 1rem;
   backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-footer {
+.profile {
   text-align: center;
-  padding: 1rem;
-  background: rgba(0,0,0,0.4);
+}
+
+.profile img {
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+
+.topics h3 {
+  margin-bottom: 0.5rem;
+}
+
+#topic-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#topic-list li {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: rgba(255,255,255,0.1);
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#topic-list li:hover {
+  background: rgba(255,255,255,0.3);
 }
