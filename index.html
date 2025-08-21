@@ -3,55 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIWord - Your AI Assistant</title>
+  <title>AIWord Chat</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>AIWord</h1>
-    <nav>
-      <a href="#home">Home</a>
-      <a href="#about">About</a>
-      <a href="#howto">How To</a>
-      <a href="#me">Developer</a>
-    </nav>
+    <h1>AIWord 💬</h1>
+    <p class="tagline">Your AI Writing Assistant — Chat Mode</p>
   </header>
 
-  <main id="home">
-    <section class="card">
-      <h2>Ask AIWord</h2>
-      <textarea id="input" placeholder="Type your text here..."></textarea>
-      <select id="action">
-        <option value="summarize">Summarize</option>
-        <option value="rewrite">Rewrite</option>
-        <option value="expand">Expand</option>
-      </select>
-      <button onclick="runAction()">Run</button>
-      <pre id="output"></pre>
+  <main>
+    <section class="chat-card">
+      <div id="chat-box" class="chat-box">
+        <div class="message assistant">
+          👋 Hi! I’m AIWord. Paste or type your text and choose an action.
+        </div>
+      </div>
+
+      <div class="chat-controls">
+        <textarea id="input" placeholder="Type a message..."></textarea>
+        <select id="action">
+          <option value="summarize">Summarize</option>
+          <option value="rewrite">Rewrite</option>
+          <option value="expand">Expand</option>
+          <option value="shorten">Shorten</option>
+        </select>
+        <button onclick="sendMessage()">Send</button>
+      </div>
     </section>
+
+    <aside class="info">
+      <h3>📌 About</h3>
+      <p>AIWord remembers your past messages so you can chat naturally.</p>
+
+      <h3>🛠️ How To</h3>
+      <p>Type → Select action → Send → AIWord responds below.</p>
+
+      <h3>👤 Developer</h3>
+      <p>Made by <strong>Rosario Espadera</strong>.</p>
+    </aside>
   </main>
 
-  <section id="about" class="card">
-    <h2>About AIWord</h2>
-    <p>AIWord is a free and lightweight AI tool powered by Groq API. It helps you summarize, rewrite, and expand your text instantly.</p>
-  </section>
-
-  <section id="howto" class="card">
-    <h2>How To Use</h2>
-    <ol>
-      <li>Type or paste your text in the box.</li>
-      <li>Select an action (Summarize, Rewrite, Expand).</li>
-      <li>Click <b>Run</b> and see the magic happen!</li>
-    </ol>
-  </section>
-
-  <section id="me" class="card">
-    <h2>About Developer</h2>
-    <p>Created by <b>Rosario Espadera</b>. Passionate about building simple AI-powered tools for everyone.</p>
-  </section>
-
   <footer>
-    <p>© 2025 AIWord by Rosario Espadera</p>
+    <p>© 2025 Rosario Espadera — All Rights Reserved</p>
   </footer>
 
   <script src="script.js"></script>
