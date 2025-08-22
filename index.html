@@ -9,31 +9,55 @@
 <body>
   <header>
     <h1>AIWord ✍️</h1>
-    <p class="tagline">Document, PDF & PPT Editor</p>
+    <p class="tagline">Word • PDF • PPT Editor</p>
     <button id="ai-toggle">🤖 AI Assistant</button>
   </header>
 
   <main>
     <!-- Sidebar -->
     <aside class="sidebar">
-      <h3>📑 Documents</h3>
-      <button onclick="newDocument()">➕ New Document</button>
-      <ul id="doc-list"></ul>
+      <h3>📑 Files</h3>
+      <button onclick="newFile()">➕ New File</button>
+      <ul id="file-list"></ul>
     </aside>
 
-    <!-- Editor Section -->
+    <!-- Main Editor Section -->
     <section class="editor-card">
-      <div class="editor-toolbar">
-        <button onclick="execCmd('bold')"><b>B</b></button>
-        <button onclick="execCmd('italic')"><i>I</i></button>
-        <button onclick="execCmd('underline')"><u>U</u></button>
-        <button onclick="execCmd('insertOrderedList')">1.</button>
-        <button onclick="execCmd('insertUnorderedList')">•</button>
+      <!-- Tab Controls -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="word">Word</button>
+        <button class="tab-btn" data-tab="pdf">PDF</button>
+        <button class="tab-btn" data-tab="ppt">PPT</button>
       </div>
-      <div id="editor" contenteditable="true" class="editor"></div>
+
+      <!-- Word Editor -->
+      <div id="word" class="tab-content active">
+        <div class="editor-toolbar">
+          <button onclick="execCmd('bold')"><b>B</b></button>
+          <button onclick="execCmd('italic')"><i>I</i></button>
+          <button onclick="execCmd('underline')"><u>U</u></button>
+          <button onclick="execCmd('insertOrderedList')">1.</button>
+          <button onclick="execCmd('insertUnorderedList')">•</button>
+        </div>
+        <div id="word-editor" contenteditable="true" class="editor"></div>
+      </div>
+
+      <!-- PDF Editor (Preview Mode for now) -->
+      <div id="pdf" class="tab-content">
+        <h2>📄 PDF Viewer/Editor (coming soon)</h2>
+        <div id="pdf-viewer" class="viewer">Upload a PDF to view/edit here.</div>
+        <input type="file" accept="application/pdf" onchange="loadPDF(event)">
+      </div>
+
+      <!-- PPT Editor -->
+      <div id="ppt" class="tab-content">
+        <h2>📊 PPT Editor</h2>
+        <div id="ppt-slides" class="ppt-container"></div>
+        <button onclick="addSlide()">➕ Add Slide</button>
+      </div>
     </section>
 
-    <!-- AI Assistant (Hidden by default) -->
+    <!-- AI Assistant -->
     <section id="ai-panel" class="ai-panel hidden">
       <h2>AI Assistant</h2>
       <div id="chat-box" class="chat-box"></div>
