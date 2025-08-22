@@ -1,83 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIWord Editor</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Document Studio</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Export libs (client-side) -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.11.1/dist/pptxgen.min.js"></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
-  <header>
-    <h1>AIWord ✍️</h1>
-    <p class="tagline">Word • PDF • PPT Editor</p>
-    <button id="ai-toggle">🤖 AI Assistant</button>
+  <!-- Top Ribbon -->
+  <header class="ribbon">
+    <div class="brand">AI Document Studio</div>
+    <div class="tools">
+      <button data-cmd="bold"><b>B</b></button>
+      <button data-cmd="italic"><i>I</i></button>
+      <button data-cmd="underline"><u>U</u></button>
+      <span class="sep"></span>
+      <button data-cmd="insertUnorderedList">• List</button>
+      <button data-cmd="insertOrderedList">1. List</button>
+      <span class="sep"></span>
+      <select id="heading">
+        <option value="p">Normal</option>
+        <option value="h1">Heading 1</option>
+        <option value="h2">Heading 2</option>
+        <option value="h3">Heading 3</option>
+      </select>
+      <span class="sep"></span>
+      <button id="undo">Undo</button>
+      <button id="redo">Redo</button>
+      <span class="sep"></span>
+      <button id="exportDocx">Export DOCX</button>
+      <button id="exportPdf">Export PDF</button>
+      <button id="exportPptx">Export PPTX</button>
+      <span class="sep"></span>
+      <button id="toggleAI" class="primary">AI Assistant</button>
+    </div>
   </header>
 
-  <main>
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <h3>📑 Files</h3>
-      <button onclick="newFile()">➕ New File</button>
-      <ul id="file-list"></ul>
-    </aside>
-
-    <!-- Main Editor Section -->
-    <section class="editor-card">
-      <!-- Tab Controls -->
-      <div class="tab-bar">
-        <button class="tab-btn active" data-tab="word">Word</button>
-        <button class="tab-btn" data-tab="pdf">PDF</button>
-        <button class="tab-btn" data-tab="ppt">PPT</button>
-      </div>
-
-      <!-- Word Editor -->
-      <div id="word" class="tab-content active">
-        <div class="editor-toolbar">
-          <button onclick="execCmd('bold')"><b>B</b></button>
-          <button onclick="execCmd('italic')"><i>I</i></button>
-          <button onclick="execCmd('underline')"><u>U</u></button>
-          <button onclick="execCmd('insertOrderedList')">1.</button>
-          <button onclick="execCmd('insertUnorderedList')">•</button>
-        </div>
-        <div id="word-editor" contenteditable="true" class="editor"></div>
-      </div>
-
-      <!-- PDF Editor (Preview Mode for now) -->
-      <div id="pdf" class="tab-content">
-        <h2>📄 PDF Viewer/Editor (coming soon)</h2>
-        <div id="pdf-viewer" class="viewer">Upload a PDF to view/edit here.</div>
-        <input type="file" accept="application/pdf" onchange="loadPDF(event)">
-      </div>
-
-      <!-- PPT Editor -->
-      <div id="ppt" class="tab-content">
-        <h2>📊 PPT Editor</h2>
-        <div id="ppt-slides" class="ppt-container"></div>
-        <button onclick="addSlide()">➕ Add Slide</button>
+  <!-- Main layout -->
+  <main class="layout">
+    <!-- Editor -->
+    <section class="editor-wrap">
+      <div id="editor" contenteditable="true" spellcheck="true" class="editor">
+        <h1>Welcome 👋</h1>
+        <p>Type your document here. Use the ribbon to format. Click “AI Assistant” to get help (summarize, rewrite, correct, expand, paraphrase).</p>
       </div>
     </section>
 
-    <!-- AI Assistant -->
-    <section id="ai-panel" class="ai-panel hidden">
-      <h2>AI Assistant</h2>
-      <div id="chat-box" class="chat-box"></div>
-      <div class="chat-controls">
-        <textarea id="input" placeholder="Type a message..."></textarea>
-        <select id="action">
+    <!-- AI Sidebar (hidden until toggled) -->
+    <aside id="aiPanel" class="ai hidden">
+      <div class="ai-header">
+        <strong>AI Assistant</strong>
+        <button id="closeAI" title="Close">✕</button>
+      </div>
+
+      <div class="ai-controls">
+        <select id="aiMode">
           <option value="summarize">Summarize</option>
           <option value="rewrite">Rewrite</option>
+          <option value="correct">Correct</option>
           <option value="expand">Expand</option>
-          <option value="shorten">Shorten</option>
+          <option value="paraphrase">Paraphrase</option>
         </select>
-        <button onclick="sendMessage()">Send</button>
+        <textarea id="aiPrompt" rows="3" placeholder="(Optional) Add instructions…"></textarea>
+        <button id="runAI" class="primary">Run</button>
       </div>
-    </section>
+
+      <div id="aiChat" class="chat"></div>
+      <div class="ai-foot">
+        <button id="insertLast">Insert last reply ↘</button>
+        <button id="clearChat">Clear chat</button>
+      </div>
+
+      <div class="about">
+        <h4>About</h4>
+        <p>Lightweight editor with AI help. Exports to DOCX/PDF/PPTX client-side.</p>
+        <h4>How to</h4>
+        <ul>
+          <li>Write in the editor.</li>
+          <li>Open AI → pick a mode → Run.</li>
+          <li>Insert result into the doc.</li>
+          <li>Export via ribbon.</li>
+        </ul>
+        <h4>Me</h4>
+        <p>Built by Rosario Espadera.</p>
+      </div>
+    </aside>
   </main>
-
-  <footer>
-    <p>© 2025 Rosario Espadera — AIWord Application</p>
-  </footer>
-
-  <script src="script.js"></script>
 </body>
 </html>
