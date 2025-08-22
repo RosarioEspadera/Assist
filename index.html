@@ -1,61 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Document Studio</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Export libs (client-side) -->
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.11.1/dist/pptxgen.min.js"></script>
-  <script defer src="script.js"></script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>AIWord — Document Editor</title>
+  <link rel="stylesheet" href="style.css"/>
+  <!-- Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- Export libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.3.1/html-docx.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
 </head>
-<body>
-  <!-- Top Ribbon -->
-  <header class="ribbon">
-    <div class="brand">AI Document Studio</div>
-    <div class="tools">
-      <button data-cmd="bold"><b>B</b></button>
-      <button data-cmd="italic"><i>I</i></button>
-      <button data-cmd="underline"><u>U</u></button>
-      <span class="sep"></span>
-      <button data-cmd="insertUnorderedList">• List</button>
-      <button data-cmd="insertOrderedList">1. List</button>
-      <span class="sep"></span>
-      <select id="heading">
-        <option value="p">Normal</option>
-        <option value="h1">Heading 1</option>
-        <option value="h2">Heading 2</option>
-        <option value="h3">Heading 3</option>
-      </select>
-      <span class="sep"></span>
-      <button id="undo">Undo</button>
-      <button id="redo">Redo</button>
-      <span class="sep"></span>
-      <button id="exportDocx">Export DOCX</button>
-      <button id="exportPdf">Export PDF</button>
-      <button id="exportPptx">Export PPTX</button>
-      <span class="sep"></span>
-      <button id="toggleAI" class="primary">AI Assistant</button>
+<body class="light">
+  <header class="topbar">
+    <div class="left">
+      <input id="fileName" class="filename" value="Untitled Document" />
+      <span id="wordCount" class="meta">0 words</span>
+    </div>
+    <div class="right">
+      <button id="toggleTheme" title="Dark/Light">🌓</button>
+      <button id="aiToggle" class="accent" title="AI Assistant">✨ AI</button>
     </div>
   </header>
 
-  <!-- Main layout -->
-  <main class="layout">
-    <!-- Editor -->
-    <section class="editor-wrap">
-      <div id="editor" contenteditable="true" spellcheck="true" class="editor">
-        <h1>Welcome 👋</h1>
-        <p>Type your document here. Use the ribbon to format. Click “AI Assistant” to get help (summarize, rewrite, correct, expand, paraphrase).</p>
+  <section class="ribbon">
+    <!-- Font controls -->
+    <select id="fontFamily" title="Font">
+      <option value="Inter, system-ui, sans-serif">Inter</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="Times New Roman, Times, serif">Times</option>
+      <option value="Arial, Helvetica, sans-serif">Arial</option>
+      <option value="Courier New, monospace">Courier New</option>
+    </select>
+    <select id="fontSize" title="Size">
+      <option>12px</option><option>14px</option><option selected>16px</option>
+      <option>18px</option><option>20px</option><option>24px</option><option>28px</option>
+    </select>
+
+    <!-- Inline formatting -->
+    <button data-cmd="bold" title="Bold"><b>B</b></button>
+    <button data-cmd="italic" title="Italic"><i>I</i></button>
+    <button data-cmd="underline" title="Underline"><u>U</u></button>
+    <button data-cmd="strikeThrough" title="Strike">S</button>
+    <button data-cmd="insertUnorderedList" title="Bullets">• List</button>
+    <button data-cmd="insertOrderedList" title="Numbered">1. List</button>
+    <button data-cmd="justifyLeft" title="Align Left">⟸</button>
+    <button data-cmd="justifyCenter" title="Align Center">≡</button>
+    <button data-cmd="justifyRight" title="Align Right">⟹</button>
+    <button data-cmd="undo" title="Undo">↶</button>
+    <button data-cmd="redo" title="Redo">↷</button>
+
+    <!-- Insert -->
+    <label class="file-btn" title="Insert Image">
+      🖼️
+      <input id="imageInput" type="file" accept="image/*" hidden/>
+    </label>
+    <button id="insertTable" title="Insert Table">▦ Table</button>
+    <button id="insertRect" title="Insert Rectangle">▭ Rect</button>
+    <button id="insertCircle" title="Insert Circle">◯ Circle</button>
+
+    <!-- Drawing overlay -->
+    <button id="drawToggle" title="Freehand Drawing">✏️ Draw</button>
+    <button id="clearDraw" title="Clear Drawing">🧹</button>
+    <button id="insertDrawing" title="Insert Drawing">⬇️ Insert Drawing</button>
+
+    <!-- Find / Replace -->
+    <button id="findBtn" title="Find">🔎 Find</button>
+    <button id="replaceBtn" title="Replace">♻ Replace</button>
+
+    <!-- Export -->
+    <button id="exportPDF">Export PDF</button>
+    <button id="exportDOCX">Export DOCX</button>
+    <button id="exportTXT">Export TXT</button>
+  </section>
+
+  <main class="workspace">
+    <aside id="historyPane" class="history">
+      <div class="history-head">
+        <span>Topics</span>
+        <button id="clearHistory" title="Clear">✖</button>
       </div>
+      <ul id="topics"></ul>
+    </aside>
+
+    <section class="sheet-wrap">
+      <div id="sheet" class="sheet" contenteditable="true">
+        <h1>Start writing…</h1>
+        <p>Use the toolbar above to format text, insert images/tables/shapes, draw, and export. Click ✨ AI to open the assistant.</p>
+      </div>
+
+      <!-- Drawing canvas overlay -->
+      <canvas id="drawLayer" class="draw-layer"></canvas>
     </section>
 
-    <!-- AI Sidebar (hidden until toggled) -->
-    <aside id="aiPanel" class="ai hidden">
-      <div class="ai-header">
+    <aside id="aiPane" class="ai closed">
+      <div class="ai-head">
         <strong>AI Assistant</strong>
-        <button id="closeAI" title="Close">✕</button>
+        <button id="aiClose">✖</button>
       </div>
 
       <div class="ai-controls">
@@ -66,30 +108,25 @@
           <option value="expand">Expand</option>
           <option value="paraphrase">Paraphrase</option>
         </select>
-        <textarea id="aiPrompt" rows="3" placeholder="(Optional) Add instructions…"></textarea>
-        <button id="runAI" class="primary">Run</button>
+        <button id="aiRun" class="accent">Run</button>
       </div>
 
-      <div id="aiChat" class="chat"></div>
-      <div class="ai-foot">
-        <button id="insertLast">Insert last reply ↘</button>
-        <button id="clearChat">Clear chat</button>
-      </div>
+      <textarea id="aiInput" placeholder="(Optional) Type a custom passage or leave empty to use the current document…"></textarea>
+      <div id="aiOutput" class="ai-output"></div>
 
-      <div class="about">
-        <h4>About</h4>
-        <p>Lightweight editor with AI help. Exports to DOCX/PDF/PPTX client-side.</p>
-        <h4>How to</h4>
-        <ul>
-          <li>Write in the editor.</li>
-          <li>Open AI → pick a mode → Run.</li>
-          <li>Insert result into the doc.</li>
-          <li>Export via ribbon.</li>
-        </ul>
-        <h4>Me</h4>
-        <p>Built by Rosario Espadera.</p>
+      <div class="ai-actions">
+        <button id="insertAtCursor">Insert at cursor</button>
+        <button id="replaceSelection">Replace selection</button>
+        <button id="replaceAll">Replace document</button>
+        <button id="saveTopic">Save topic</button>
       </div>
     </aside>
   </main>
+
+  <footer class="footer">
+    <span>© 2025 AIWord</span>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
