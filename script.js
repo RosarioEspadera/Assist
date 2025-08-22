@@ -1,5 +1,47 @@
+/* ---- Document Editing ---- */
+let documents = JSON.parse(localStorage.getItem("documents")) || [];
+let currentDoc = null;
+
+function execCmd(command) {
+  document.execCommand(command, false, null);
+}
+
+function newDocument() {
+  const name = prompt("Enter document name:");
+  if (name) {
+    documents.push({ name, content: "" });
+    updateDocList();
+    openDocument(documents.length - 1);
+  }
+}
+
+function updateDocList() {
+  const list = document.getElementById("doc-list");
+  list.innerHTML = "";
+  documents.forEach((doc, idx) => {
+    const li = document.createElement("li");
+    li.textContent = doc.name;
+    li.onclick = () => openDocument(idx);
+    list.appendChild(li);
+  });
+  localStorage.setItem("documents", JSON.stringify(documents));
+}
+
+function openDocument(idx) {
+  currentDoc = idx;
+  const editor = document.getElementById("editor");
+  editor.innerHTML = documents[idx].content;
+}
+
+document.getElementById("editor").addEventListener("input", () => {
+  if (currentDoc !== null) {
+    documents[currentDoc].content = document.getElementById("editor").innerHTML;
+    localStorage.setItem("documents", JSON.stringify(documents));
+  }
+});
+
+/* ---- AI Assistant ---- */
 let conversations = JSON.parse(localStorage.getItem("conversations")) || [];
-let currentTopic = null;
 
 function addMessage(text, role) {
   const chatBox = document.getElementById("chat-box");
@@ -8,13 +50,6 @@ function addMessage(text, role) {
   msg.textContent = text;
   chatBox.appendChild(msg);
   chatBox.scrollTop = chatBox.scrollHeight;
-
-  // Save to current conversation
-  if (currentTopic) {
-    const topic = conversations.find(c => c.title === currentTopic);
-    topic.messages.push({ role, text });
-    localStorage.setItem("conversations", JSON.stringify(conversations));
-  }
 }
 
 async function sendMessage() {
@@ -23,17 +58,9 @@ async function sendMessage() {
   const userText = inputEl.value.trim();
   if (!userText) return;
 
-  // Create topic if new
-  if (!currentTopic) {
-    currentTopic = userText.slice(0, 20) + "...";
-    conversations.push({ title: currentTopic, messages: [] });
-    updateTopicList();
-  }
-
   addMessage(userText, "user");
   inputEl.value = "";
 
-  // Temporary AI response
   addMessage("⏳ Thinking...", "assistant");
   const chatBox = document.getElementById("chat-box");
   const aiMsg = chatBox.lastChild;
@@ -51,38 +78,10 @@ async function sendMessage() {
   }
 }
 
-function updateTopicList() {
-  const list = document.getElementById("topic-list");
-  list.innerHTML = "";
-  conversations.forEach(conv => {
-    const li = document.createElement("li");
-    li.textContent = conv.title;
-    li.onclick = () => loadConversation(conv.title);
-    list.appendChild(li);
-  });
-  localStorage.setItem("conversations", JSON.stringify(conversations));
-}
+/* ---- Toggle AI Panel ---- */
+document.getElementById("ai-toggle").addEventListener("click", () => {
+  document.getElementById("ai-panel").classList.toggle("hidden");
+});
 
-function loadConversation(title) {
-  currentTopic = title;
-  const chatBox = document.getElementById("chat-box");
-  chatBox.innerHTML = "";
-  const conv = conversations.find(c => c.title === title);
-  conv.messages.forEach(msg => addMessage(msg.text, msg.role));
-}
-
-function toggleLogin() {
-  const usernameEl = document.getElementById("username");
-  const loginBtn = document.getElementById("login-btn");
-
-  if (usernameEl.textContent === "Guest") {
-    usernameEl.textContent = "Rosario";
-    loginBtn.textContent = "Log out";
-  } else {
-    usernameEl.textContent = "Guest";
-    loginBtn.textContent = "Log in";
-  }
-}
-
-// Init
-updateTopicList();
+/* Init */
+updateDocList();
