@@ -1,151 +1,279 @@
 // ==== CONFIG ====
-const API_URL = "https://aiword-1.onrender.com/process"; // your FastAPI endpoint
+const BACKEND_URL = "https://aiword-1.onrender.com/process"; // <- your FastAPI /process
 
-// ==== RIBBON COMMANDS ====
-const editor = document.getElementById("editor");
-document.querySelectorAll("[data-cmd]").forEach(btn => {
-  btn.addEventListener("click", () => document.execCommand(btn.dataset.cmd, false, null));
-});
-
-document.getElementById("heading").addEventListener("change", e => {
-  const tag = e.target.value;
-  if (tag === "p") document.execCommand("formatBlock", false, "P");
-  else document.execCommand("formatBlock", false, tag.toUpperCase());
-});
-
-document.getElementById("undo").onclick = () => document.execCommand("undo");
-document.getElementById("redo").onclick = () => document.execCommand("redo");
-
-// ==== LAYOUT TOGGLE ====
-const aiPanel = document.getElementById("aiPanel");
-const layout = document.querySelector(".layout");
-document.getElementById("toggleAI").onclick = () => {
-  aiPanel.classList.toggle("hidden");
-  layout.classList.toggle("with-ai");
-};
-document.getElementById("closeAI").onclick = () => {
-  aiPanel.classList.add("hidden");
-  layout.classList.remove("with-ai");
-};
-
-// ==== AI CHAT ====
+// ==== DOM ====
+const sheet = document.getElementById("sheet");
+const wordCountEl = document.getElementById("wordCount");
+const fileNameEl = document.getElementById("fileName");
+const aiPane = document.getElementById("aiPane");
+const aiToggle = document.getElementById("aiToggle");
+const aiClose = document.getElementById("aiClose");
 const aiMode = document.getElementById("aiMode");
-const aiPrompt = document.getElementById("aiPrompt");
-const aiChat = document.getElementById("aiChat");
-const insertLastBtn = document.getElementById("insertLast");
-const clearChatBtn = document.getElementById("clearChat");
+const aiInput = document.getElementById("aiInput");
+const aiOutput = document.getElementById("aiOutput");
+const aiRun = document.getElementById("aiRun");
+const insertAtCursorBtn = document.getElementById("insertAtCursor");
+const replaceSelectionBtn = document.getElementById("replaceSelection");
+const replaceAllBtn = document.getElementById("replaceAll");
+const saveTopicBtn = document.getElementById("saveTopic");
+const topicsEl = document.getElementById("topics");
+const clearHistoryBtn = document.getElementById("clearHistory");
+const toggleTheme = document.getElementById("toggleTheme");
+const fontFamily = document.getElementById("fontFamily");
+const fontSize = document.getElementById("fontSize");
+const imageInput = document.getElementById("imageInput");
+const insertTableBtn = document.getElementById("insertTable");
+const insertRectBtn = document.getElementById("insertRect");
+const insertCircleBtn = document.getElementById("insertCircle");
+const drawToggle = document.getElementById("drawToggle");
+const clearDraw = document.getElementById("clearDraw");
+const insertDrawing = document.getElementById("insertDrawing");
+const findBtn = document.getElementById("findBtn");
+const replaceBtn = document.getElementById("replaceBtn");
+const exportPDF = document.getElementById("exportPDF");
+const exportDOCX = document.getElementById("exportDOCX");
+const exportTXT = document.getElementById("exportTXT");
+const canvas = document.getElementById("drawLayer");
+const ctx = canvas.getContext("2d");
 
-let chat = []; // {role: "user"|"ai", text: string}
-let lastAI = "";
+// ==== THEME ====
+toggleTheme.addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+});
 
-// Load/save chat & doc
-(function restore() {
-  const saved = localStorage.getItem("ads_state");
-  if (!saved) return;
-  const { content, chatSaved } = JSON.parse(saved);
-  if (content) editor.innerHTML = content;
-  if (Array.isArray(chatSaved)) {
-    chat = chatSaved;
-    renderChat();
-  }
-})();
-function persist() {
-  localStorage.setItem("ads_state", JSON.stringify({ content: editor.innerHTML, chatSaved: chat }));
+// ==== WORD COUNT ====
+function updateWordCount() {
+  const text = sheet.innerText
+    .replace(/\s+/g, " ")
+    .trim();
+  const words = text.length ? text.split(" ").length : 0;
+  wordCountEl.textContent = `${words} word${words===1?"":"s"}`;
 }
-editor.addEventListener("input", persist);
+sheet.addEventListener("input", updateWordCount);
+updateWordCount();
 
-// Render chat
-function renderChat() {
-  aiChat.innerHTML = "";
-  chat.forEach(m => {
-    const div = document.createElement("div");
-    div.className = `msg ${m.role}`;
-    div.textContent = m.text;
-    aiChat.appendChild(div);
+// ==== EXEC COMMANDS ====
+document.querySelectorAll('[data-cmd]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.execCommand(btn.dataset.cmd, false, null);
+    sheet.focus();
   });
-  aiChat.scrollTop = aiChat.scrollHeight;
-}
+});
 
-async function runAI() {
-  const mode = aiMode.value;
-  const prompt = aiPrompt.value.trim();
-  const docText = editor.innerText.trim();
+// Font family / size
+fontFamily.addEventListener("change", ()=> document.execCommand("fontName", false, fontFamily.value));
+fontSize.addEventListener("change", ()=>{
+  sheet.style.fontSize = fontSize.value; // visual
+  document.execCommand("fontSize", false, "3"); // ensures span wrapper exists
+});
 
-  const userMsg = prompt ? `${prompt}\n\n[Document]\n${docText}` : docText || "(empty document)";
-  chat.push({ role: "user", text: `(${mode})\n${userMsg}` });
-  renderChat(); persist();
+// ==== INSERT IMAGE ====
+imageInput.addEventListener("change", (e)=>{
+  const file = e.target.files?.[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.execCommand("insertImage", false, reader.result);
+  };
+  reader.readAsDataURL(file);
+  imageInput.value = "";
+});
 
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: userMsg, mode })
-    });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    const data = await res.json();
-
-    const reply = data?.output || "No response.";
-    lastAI = reply;
-    chat.push({ role: "ai", text: reply });
-    renderChat(); persist();
-  } catch (e) {
-    const err = `Error: ${e.message}`;
-    lastAI = err;
-    chat.push({ role: "ai", text: err });
-    renderChat(); persist();
+// ==== TABLE / SHAPES ====
+insertTableBtn.addEventListener("click", ()=>{
+  const r = +prompt("Rows?", "2") || 2;
+  const c = +prompt("Columns?", "2") || 2;
+  let html = `<table style="border-collapse:collapse;width:100%;margin:8px 0">`;
+  for(let i=0;i<r;i++){
+    html += "<tr>";
+    for(let j=0;j<c;j++){
+      html += `<td style="border:1px solid #ccc;padding:6px">Cell</td>`;
+    }
+    html += "</tr>";
   }
+  html += "</table>";
+  insertHTML(html);
+});
+insertRectBtn.addEventListener("click", ()=> insertHTML(`<div style="width:160px;height:90px;border:2px solid #666;border-radius:6px;margin:8px auto;"></div>`));
+insertCircleBtn.addEventListener("click", ()=> insertHTML(`<div style="width:100px;height:100px;border:2px solid #666;border-radius:50%;margin:8px auto;"></div>`));
+
+function insertHTML(html){
+  const sel = window.getSelection();
+  if(!sel || !sel.rangeCount) { sheet.focus(); return; }
+  const range = sel.getRangeAt(0);
+  const el = document.createElement("div");
+  el.innerHTML = html;
+  const frag = document.createDocumentFragment();
+  let node;
+  while((node = el.firstChild)) frag.appendChild(node);
+  range.deleteContents();
+  range.insertNode(frag);
+  range.collapse(false);
 }
-document.getElementById("runAI").onclick = runAI;
-insertLastBtn.onclick = () => {
-  if (!lastAI) return;
-  document.execCommand("insertText", false, lastAI);
-};
-clearChatBtn.onclick = () => { chat = []; renderChat(); persist(); };
 
-// ==== EXPORTS ====
-// DOCX
-document.getElementById("exportDocx").onclick = async () => {
-  const { Document, Packer, Paragraph, HeadingLevel, TextRun } = window.docx;
-  const temp = document.createElement("div");
-  temp.innerHTML = editor.innerHTML;
+// ==== DRAWING OVERLAY ====
+let drawing = false, drawEnabled = false, last={x:0,y:0};
+function fitCanvas(){
+  const rect = sheet.getBoundingClientRect();
+  const wrap = document.querySelector(".sheet-wrap").getBoundingClientRect();
+  const left = (wrap.width - rect.width)/2;
+  canvas.style.left = `calc(50% - ${rect.width/2}px)`;
+  canvas.style.top = `${rect.top - wrap.top}px`;
+  canvas.width = rect.width; canvas.height = rect.height;
+}
+window.addEventListener("resize", fitCanvas);
+fitCanvas();
 
-  const children = [];
-  for (const node of temp.childNodes) {
-    if (node.nodeType === 3) {
-      children.push(new Paragraph({ children: [new TextRun(node.textContent || "")] }));
-    } else if (node.tagName?.match(/^H[1-6]$/)) {
-      const lvl = Number(node.tagName[1]);
-      children.push(new Paragraph({ text: node.textContent || "", heading: HeadingLevel[`HEADING_${lvl}`] || HeadingLevel.HEADING_1 }));
-    } else {
-      children.push(new Paragraph({ text: node.textContent || "" }));
+drawToggle.addEventListener("click", ()=>{
+  drawEnabled = !drawEnabled;
+  canvas.classList.toggle("active", drawEnabled);
+});
+canvas.addEventListener("mousedown", e => { drawing=true; last=getPos(e); });
+canvas.addEventListener("mousemove", e => {
+  if(!drawing) return;
+  const p=getPos(e);
+  ctx.lineWidth=2; ctx.lineCap="round"; ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--fg');
+  ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+  last=p;
+});
+["mouseup","mouseleave"].forEach(ev=>canvas.addEventListener(ev, ()=> drawing=false));
+clearDraw.addEventListener("click", ()=> ctx.clearRect(0,0,canvas.width,canvas.height));
+insertDrawing.addEventListener("click", ()=>{
+  const url = canvas.toDataURL("image/png");
+  if(url) document.execCommand("insertImage", false, url);
+});
+
+function getPos(e){
+  const b = canvas.getBoundingClientRect();
+  return { x: e.clientX - b.left, y: e.clientY - b.top };
+}
+
+// ==== FIND / REPLACE ====
+findBtn.addEventListener("click", ()=>{
+  const q = prompt("Find:");
+  if(!q) return;
+  const sel = window.getSelection();
+  const range = document.createRange();
+  const treeWalker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT);
+  let found = false, node;
+  while(node = treeWalker.nextNode()){
+    const idx = node.nodeValue.toLowerCase().indexOf(q.toLowerCase());
+    if(idx>-1){
+      range.setStart(node, idx);
+      range.setEnd(node, idx+q.length);
+      sel.removeAllRanges(); sel.addRange(range);
+      found = true; break;
     }
   }
+  if(!found) alert("Not found");
+});
+replaceBtn.addEventListener("click", ()=>{
+  const q = prompt("Find:");
+  if(!q) return;
+  const r = prompt("Replace with:", "");
+  if(r===null) return;
+  sheet.innerHTML = sheet.innerHTML.replaceAll(
+    new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), "gi"), r
+  );
+});
 
-  const doc = new Document({ sections: [{ properties: {}, children }] });
-  const blob = await Packer.toBlob(doc);
-  downloadBlob(blob, "document.docx");
-};
-
-// PDF (quick HTML render)
-document.getElementById("exportPdf").onclick = () => {
-  const opt = { margin: 10, filename: "document.pdf", image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" } };
-  window.html2pdf().set(opt).from(editor).save();
-};
-
-// PPTX (one slide with all text)
-document.getElementById("exportPptx").onclick = () => {
-  const pptx = new window.PptxGenJS();
-  const slide = pptx.addSlide();
-  const text = editor.innerText || "";
-  slide.addText(text, { x: 0.5, y: 0.5, w: 9, h: 5, fontSize: 16 });
-  pptx.writeFile({ fileName: "document.pptx" });
-};
-
-// Helper
-function downloadBlob(blob, filename) {
+// ==== EXPORT ====
+exportPDF.addEventListener("click", ()=>{
+  const opt = { margin: 10, filename: `${fileNameEl.value||"Document"}.pdf`, html2canvas: {scale:2}, jsPDF: {unit:'mm', format:'a4', orientation:'portrait'} };
+  html2pdf().set(opt).from(sheet).save();
+});
+exportDOCX.addEventListener("click", ()=>{
+  const page = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${fileNameEl.value}</title></head><body>${sheet.innerHTML}</body></html>`;
+  const blob = window.htmlDocx.asBlob(page);
+  downloadBlob(blob, `${fileNameEl.value||"Document"}.docx`);
+});
+exportTXT.addEventListener("click", ()=>{
+  const blob = new Blob([sheet.innerText], {type:"text/plain;charset=utf-8"});
+  downloadBlob(blob, `${fileNameEl.value||"Document"}.txt`);
+});
+function downloadBlob(blob, filename){
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  URL.revokeObjectURL(a.href);
 }
+
+// ==== AI PANEL TOGGLE ====
+aiToggle.addEventListener("click", ()=> aiPane.classList.toggle("closed"));
+aiClose.addEventListener("click", ()=> aiPane.classList.add("closed"));
+
+// ==== AI: RUN ====
+aiRun.addEventListener("click", async ()=>{
+  const mode = aiMode.value;
+  const text = aiInput.value.trim() || sheet.innerText.trim();
+  if(!text){ aiOutput.textContent = "No text to process."; return; }
+
+  aiOutput.textContent = "Working…";
+  try{
+    const res = await fetch(BACKEND_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ text, mode })
+    });
+    const data = await res.json();
+    if(res.ok && data.output){
+      aiOutput.textContent = data.output;
+      pushTopic({ title:`${mode}: ${short(text)}`, body:data.output, mode, ts:Date.now() });
+    }else{
+      aiOutput.textContent = "Error: " + (data.detail ? JSON.stringify(data.detail) : res.statusText);
+    }
+  }catch(err){
+    aiOutput.textContent = "Network error.";
+  }
+});
+
+// ==== AI → INSERT / REPLACE ====
+insertAtCursorBtn.addEventListener("click", ()=> insertHTML(escapeHtml(aiOutput.textContent)));
+replaceSelectionBtn.addEventListener("click", ()=>{
+  const sel = window.getSelection();
+  if(!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  range.insertNode(document.createTextNode(aiOutput.textContent));
+});
+replaceAllBtn.addEventListener("click", ()=> sheet.innerText = aiOutput.textContent);
+
+// ==== TOPICS (LOCAL STORAGE) ====
+function loadTopics(){
+  const items = JSON.parse(localStorage.getItem("ai_topics")||"[]");
+  topicsEl.innerHTML = "";
+  items.slice().reverse().forEach((t,i)=>{
+    const li = document.createElement("li");
+    li.textContent = t.title;
+    li.title = new Date(t.ts).toLocaleString();
+    li.addEventListener("click", ()=> { aiPane.classList.remove("closed"); aiOutput.textContent = t.body; aiMode.value=t.mode; });
+    topicsEl.appendChild(li);
+  });
+}
+function pushTopic(t){
+  const items = JSON.parse(localStorage.getItem("ai_topics")||"[]");
+  items.push(t);
+  localStorage.setItem("ai_topics", JSON.stringify(items));
+  loadTopics();
+}
+clearHistoryBtn.addEventListener("click", ()=>{
+  if(confirm("Clear all topics?")){
+    localStorage.removeItem("ai_topics");
+    loadTopics();
+  }
+});
+document.getElementById("saveTopic").addEventListener("click", ()=>{
+  if(!aiOutput.textContent) return;
+  pushTopic({ title: `${aiMode.value}: ${short(aiOutput.textContent)}`, body: aiOutput.textContent, mode: aiMode.value, ts: Date.now() });
+});
+loadTopics();
+
+// ==== HELPERS ====
+function short(s){ return s.length>48 ? s.slice(0,48)+"…" : s; }
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str; 
+  return div.innerHTML.replace(/\n/g,"<br>");
+}
+
+// Initial focus
+sheet.focus();
