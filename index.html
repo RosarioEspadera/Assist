@@ -3,24 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIWord Chat</title>
+  <title>AIWord Editor</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>AIWord 💬</h1>
-    <p class="tagline">Your AI Writing Assistant — Chat Mode</p>
+    <h1>AIWord ✍️</h1>
+    <p class="tagline">Document, PDF & PPT Editor</p>
+    <button id="ai-toggle">🤖 AI Assistant</button>
   </header>
 
   <main>
-    <!-- Chat Section -->
-    <section class="chat-card">
-      <div id="chat-box" class="chat-box">
-        <div class="message assistant">
-          👋 Hi! I’m AIWord. Paste or type your text and choose an action.
-        </div>
-      </div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h3>📑 Documents</h3>
+      <button onclick="newDocument()">➕ New Document</button>
+      <ul id="doc-list"></ul>
+    </aside>
 
+    <!-- Editor Section -->
+    <section class="editor-card">
+      <div class="editor-toolbar">
+        <button onclick="execCmd('bold')"><b>B</b></button>
+        <button onclick="execCmd('italic')"><i>I</i></button>
+        <button onclick="execCmd('underline')"><u>U</u></button>
+        <button onclick="execCmd('insertOrderedList')">1.</button>
+        <button onclick="execCmd('insertUnorderedList')">•</button>
+      </div>
+      <div id="editor" contenteditable="true" class="editor"></div>
+    </section>
+
+    <!-- AI Assistant (Hidden by default) -->
+    <section id="ai-panel" class="ai-panel hidden">
+      <h2>AI Assistant</h2>
+      <div id="chat-box" class="chat-box"></div>
       <div class="chat-controls">
         <textarea id="input" placeholder="Type a message..."></textarea>
         <select id="action">
@@ -32,24 +48,10 @@
         <button onclick="sendMessage()">Send</button>
       </div>
     </section>
-
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="profile">
-        <img id="avatar" src="https://via.placeholder.com/80" alt="avatar">
-        <h3 id="username">Guest</h3>
-        <button id="login-btn" onclick="toggleLogin()">Log in</button>
-      </div>
-
-      <div class="topics">
-        <h3>📂 Past Topics</h3>
-        <ul id="topic-list"></ul>
-      </div>
-    </aside>
   </main>
 
   <footer>
-    <p>© 2025 Rosario Espadera — All Rights Reserved</p>
+    <p>© 2025 Rosario Espadera — AIWord Application</p>
   </footer>
 
   <script src="script.js"></script>
